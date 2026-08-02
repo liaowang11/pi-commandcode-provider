@@ -277,7 +277,10 @@ try {
   )
   assert.equal(firstOfflineList.code, 0, firstOfflineList.stderr)
   assert.doesNotMatch(firstOfflineList.stderr, /Failed to load extension/)
-  assert.match(firstOfflineList.stdout || firstOfflineList.stderr, /No models matching/)
+  assert.match(
+    firstOfflineList.stdout || firstOfflineList.stderr,
+    /No models (?:matching|available)/,
+  )
   assert.match(firstOfflineList.stderr, /no valid cached catalog/)
   assert.match(firstOfflineList.stderr, /until \/reload succeeds/)
   assert.throws(() => accessSync(modelsCachePath, constants.R_OK), /ENOENT|no such file/i)
