@@ -11,15 +11,10 @@ import type { CommandCodeReasoningEffort } from "./commandcode-catalog.ts"
  *
  * Add a model only when the effort parameter is known to be accepted by the
  * Command Code endpoint; remove it once the CLI catalog ships its own efforts.
+ *
+ * Currently empty: command-code@1.53.0 publishes selectable efforts for every
+ * reasoning model we track, so no manual levels are needed.
  */
 export const MODEL_EFFORT_OVERRIDES: Readonly<
   Record<string, readonly CommandCodeReasoningEffort[]>
-> = {
-  // Meta Muse Spark: the CLI ships no effort levels, but the endpoint accepts
-  // `reasoning_effort` for these models and other hosts expose the same set.
-  "meta/muse-spark-1.1": ["minimal", "low", "medium", "high", "xhigh"],
-  "meta/muse-spark-1.2": ["minimal", "low", "medium", "high", "xhigh"],
-  "meta/muse-spark-1.2-contributor": ["minimal", "low", "medium", "high", "xhigh"],
-  "meta/muse-spark-1.3": ["minimal", "low", "medium", "high", "xhigh"],
-  "meta/muse-spark-1.3-contributor": ["minimal", "low", "medium", "high", "xhigh"],
-}
+> = {}
