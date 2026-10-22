@@ -30,7 +30,7 @@ const pricingFixture = JSON.parse(await readFile(pricingFixtureUrl, "utf-8")) as
 const freeModels = new Set([
   "poolside/laguna-s-2.1-free",
   "stealth/glyph-cluster:free",
-  "stealth/cat-jam:free",
+  "reflection/beam:free",
 ])
 
 function assertCost(
@@ -54,7 +54,8 @@ function assertCost(
 describe("MODEL_COSTS pricing overlay", () => {
   it("covers the current Command Code model catalog snapshot", () => {
     assert.equal(fixture.source, "https://api.commandcode.ai/provider/v1/models")
-    assert.match(fixture.fetchedAt, /^2026-10-16T/)
+    assert.match(fixture.fetchedAt, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)
+    assert.equal(new Date(fixture.fetchedAt).toISOString(), fixture.fetchedAt)
 
     const catalogIds = [...fixture.modelIds].sort()
     const pricedIds = Object.keys(MODEL_COSTS).sort()
@@ -93,6 +94,29 @@ describe("MODEL_COSTS pricing overlay", () => {
       ),
     )
     assert.deepEqual(MODEL_COSTS, expected)
+  })
+
+  it("matches reviewed MiniMax M3.1 Flash and Ornith rates after their free promotions ended", () => {
+    assertCost("minimax/minimax-m3.1-flash", {
+      input: 0.15,
+      output: 0.6,
+      cacheRead: 0.015,
+      cacheWrite: 0,
+    })
+    assertCost("ornith/ornith-1.5-122b", {
+      input: 0.16,
+      output: 0.64,
+      cacheRead: 0.02,
+      cacheWrite: 0,
+    })
+    // Both free promotions ended on 2026-10-22 and the API dropped the models.
+    assert.equal(MODEL_COSTS["minimax/minimax-m3.1-flash:free"], undefined)
+    assert.equal(MODEL_COSTS["ornith/ornith-1.5-122b:free"], undefined)
+    assert.deepEqual(TEMPORARY_PRICING, [])
+  })
+
+  it("matches reviewed late-October Beam promotion rates", () => {
+    assertCost("reflection/beam:free", { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 })
   })
 
   it("uses non-zero prices except for models documented as free", () => {
@@ -368,12 +392,12 @@ describe("MODEL_COSTS pricing overlay", () => {
       cacheRead: 0.15,
       cacheWrite: 0,
     })
-    assertCost("stealth/cat-jam:free", { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 })
+    assert.equal(MODEL_COSTS["stealth/cat-jam:free"], undefined)
   })
 
   it("tracks pricing provenance", () => {
     assert.equal(PRICING_SOURCE_URL, "https://commandcode.ai/docs/resources/pricing-limits")
-    assert.equal(PRICING_LAST_VERIFIED, "2026-10-15")
+    assert.equal(PRICING_LAST_VERIFIED, "2026-10-22")
   })
 
   it("fails once temporary pricing needs review", () => {
@@ -383,7 +407,7 @@ describe("MODEL_COSTS pricing overlay", () => {
       assert.ok(pricing.models.length > 0)
       assert.ok(
         pricing.expiresOn >= today,
-        `${pricing.description} for ${pricing.models.join(", ")} expired on ${pricing.expiresOn}; refresh MODEL_COSTS`,
+        `${pricing.description} for ${pricing.models.join(", ")} needs recheck after ${pricing.expiresOn}; refresh MODEL_COSTS`,
       )
       for (const modelId of pricing.models) {
         assert.ok(MODEL_COSTS[modelId], `${modelId} should have a temporary price entry`)
